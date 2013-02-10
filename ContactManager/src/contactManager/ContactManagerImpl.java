@@ -190,12 +190,14 @@ public class ContactManagerImpl implements ContactManager {
 					//I check that the meeting has already taken place and therefore is now a PastMeeting
 					
 					//Check that the meetings date is in the past
-				Calendar rightNow = Calendar.getInstance();
-				Calendar date = futureMeetings.get(id).getDate();
+					Calendar rightNow = Calendar.getInstance();
+					Calendar date = futureMeetings.get(id).getDate();
 				
-				if (date.compareTo(rightNow) > 0) {
-					throw new IllegalStateException("Date given is a future date");
-				}
+					if (date.compareTo(rightNow) > 0) {
+						throw new IllegalStateException("Date given is a future date");
+					}
+					
+					//Now i recreate the meeting as a PastMeeting
 					
 					PastMeeting meeting = (PastMeeting) futureMeetings.get(id); //Cast the meeting to make it a PastMeeting
 					meeting = new PastMeetingImpl(meeting.getId(), meeting.getContacts(), meeting.getDate(), text);
