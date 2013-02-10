@@ -22,7 +22,7 @@ public class ContactManagerImpl implements ContactManager {
 		//Check given date is in the future
 		Calendar rightNow = Calendar.getInstance();
 		if (date.compareTo(rightNow) < 0) {
-			throw new IllegalArgumentException("Date given is NOT a past date");
+			throw new IllegalArgumentException("Date given is NOT a future date");
 		}
 		//Create the meeting
 		meetingCount++;
@@ -150,7 +150,7 @@ public class ContactManagerImpl implements ContactManager {
 		//Check given date is in the past
 		Calendar rightNow = Calendar.getInstance();
 		if (date.compareTo(rightNow) > 0) {
-			throw new IllegalArgumentException("Date given is NOT a future date");
+			throw new IllegalArgumentException("Date given is NOT a past date");
 		}
 		//Create the meeting
 		meetingCount++;
@@ -183,17 +183,30 @@ public class ContactManagerImpl implements ContactManager {
 			pastMeetings.put(id, meeting);
 		}
 		//B) It is a futureMeeting that took place and I now want to recreate it as a pastMeeting and add some notes
-		else if (futureMeetings.containsKey(id)) {
-			PastMeeting meeting = (PastMeeting) futureMeetings.get(id); //Cast the meeting to make it a PastMeeting
-			meeting = new PastMeetingImpl(meeting.getId(), meeting.getContacts(), meeting.getDate(), text);
-			//Remove the meting from the futureMeetings map
-			futureMeetings.remove(id);
-			//Finally add the meeting to the pastMeetings map
-			pastMeetings.put(id, meeting);
-			}
 		
-		//Finally if the meeting with this id does not exist either as a past or a future meeting , throw exception
-		else throw new IllegalArgumentException("A meeting with this id does NOT exist");
+				//This if checks that the meeting was once added as a futureMeeting
+				else if (futureMeetings.containsKey(id)) {
+				
+					//I check that the meeting has already taken place and therefore is now a PastMeeting
+					
+					//Check that the meetings date is in the past
+				Calendar rightNow = Calendar.getInstance();
+				Calendar date = futureMeetings.get(id).getDate();
+				
+				if (date.compareTo(rightNow) > 0) {
+					throw new IllegalStateException("Date given is a future date");
+				}
+					
+					PastMeeting meeting = (PastMeeting) futureMeetings.get(id); //Cast the meeting to make it a PastMeeting
+					meeting = new PastMeetingImpl(meeting.getId(), meeting.getContacts(), meeting.getDate(), text);
+					//Remove the meting from the futureMeetings map
+					futureMeetings.remove(id);
+					//Finally add the meeting to the pastMeetings map
+					pastMeetings.put(id, meeting);
+					}
+				
+				//Finally if the meeting with this id does not exist either as a past or a future meeting , throw exception
+				else throw new IllegalArgumentException("A meeting with this id does NOT exist");
 	}	
 		
 		

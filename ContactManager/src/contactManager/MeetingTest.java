@@ -27,7 +27,7 @@ public class MeetingTest {
 		@SuppressWarnings("unused")
 		Calendar cal1 = Calendar.getInstance();
 		
-		String date = "07/02/2013 20:00";
+		String date = "26/02/2013 20:00";
 		Calendar futureDate = DateConverter.string2Date(date);
 		
 		
