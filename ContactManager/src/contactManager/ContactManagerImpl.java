@@ -10,7 +10,135 @@ public class ContactManagerImpl implements ContactManager {
 	private Map<Integer, PastMeeting> pastMeetings = new HashMap<Integer, PastMeeting>();
 	private Map<Integer, FutureMeeting> futureMeetings = new HashMap<Integer, FutureMeeting>();
 	private Map<Integer, Contact> savedContacts = new HashMap<Integer, Contact>();
+	private File file = new File("contacts.txt");
+	
+	public ContactManagerImpl() {
+		if (file.exists()) {
+			readFromFile();
+		}
+	}
 
+	private void readFromFile() {
+		BufferedReader in = null;
+		try {
+			in = new BufferedReader(new FileReader(file));
+			String line;
+			String[] array;
+			
+			while ((line = in.readLine()) != null) {
+				//I split each line into an array using comma (",") as a delimiter
+				array = line.split(",");
+				//Then, I recognise what each line refers to by the first element of the array which is the header.
+				String header = array[0];
+				// I cant use switch/case because string is not a primitive type. So ill go with if/else.
+
+				if (header.equals("Contact")) {
+					//I get the values from the array
+					int contId = Integer.parseInt(array[1]);
+					String contName = array[2];
+
+					String contNotes = array[3];
+					//Now I create a contact with this attributes(id, name)
+					Contact contact = new ContactImpl(contId, contName);
+					//Then I add the notes
+					contact.addNotes(contNotes);
+					//Finally I add the created contact in my Hashmap
+					savedContacts.put(contId, contact);
+					contactCount = contId;
+				}
+				else if (header.equals("Past Meeting")) {
+					//I create a Set of contacts
+					Set<Contact> meetSet = new HashSet<Contact>();
+					//I create another String array to store the contacts
+					String[] contArray;
+					//I assign the contacts to this array by spliting the contact part of the initial array with the delimiter "/"
+					contArray = array[2].split("/");
+					int contArraySize = contArray.length;
+					for (int i=0 ; i<contArraySize ; i++) {
+						//Get the id of each contact as a string
+						String stringId = contArray[i].substring(8);
+						//Parse it into an int
+						int id = Integer.parseInt(stringId);
+						//Get the contact with this id from my HashMap
+						Contact contact = savedContacts.get(id);
+						//Finally add the contact to my Set
+						meetSet.add(contact);
+					
+					}
+					//Then I the other values from the fist array
+					int meetId = Integer.parseInt(array[1]);
+					String stringDate = array[3];
+					String meetNotes = array[4];
+					//Now I convert the stringDate to a Calendar Date with my DateConverter
+					Calendar meetDate;
+					meetDate = DateConverter.string2Date(stringDate);
+					//I create the PastMeeting
+					PastMeeting pastMeet = new PastMeetingImpl(meetId, meetSet, meetDate, meetNotes);
+					//And add it to my PastMeetings map
+					pastMeetings.put(meetId, pastMeet);
+					//Finally update the meeting counter
+					if (meetingCount < meetId) {
+						meetingCount = meetId;
+					}	
+				}
+				else if (header.equals("Future Meeting")) {
+					//I create a Set of contacts
+					Set<Contact> meetSet = new HashSet<Contact>();
+					//I create another String array to store the contacts
+					String[] contArray;
+					//I assign the contacts to this array by spliting the contact part of the initial array with the delimiter "/"
+					contArray = array[2].split("/");
+					int contArraySize = contArray.length;
+					for (int i=0 ; i<contArraySize ; i++) {
+						//Get the id of each contact as a string
+						String stringId = contArray[i].substring(8);
+						//Parse it into an int
+						int id = Integer.parseInt(stringId);
+						//Get the contact with this id from my HashMap
+						Contact contact = savedContacts.get(id);
+						//Finally add the contact to my Set
+						meetSet.add(contact);
+					}
+					//Then I the other values from the fist array
+					int meetId = Integer.parseInt(array[1]);
+					String stringDate = array[3];
+					//Now I convert the stringDate to a Calendar Date with my DateConverter
+					Calendar meetDate;
+					meetDate = DateConverter.string2Date(stringDate);
+					//I create the FutureMeet
+					FutureMeeting futureMeet = new FutureMeetingImpl(meetId, meetSet, meetDate);
+					//And add it to my FutureMeetings map
+					futureMeetings.put(meetId, futureMeet);
+					//Finally update the meeting counter
+					if (meetingCount < meetId) {
+						meetingCount = meetId;
+					}	
+				}	
+			}	
+		} 
+		// This exception cannot happen, because i checked if file exists in the constructor, maybe ill remove it. TODO
+		catch (FileNotFoundException ex) {
+			System.out.println("File " + file + " does not exist.");
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} 
+		finally {
+			try {
+				if (in != null) {
+					in.close();
+				}
+			}
+			catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+	}	
+			
+		
+		
+		
+		
+		
 	public int addFutureMeeting(Set<Contact> contacts, Calendar date) {		
 		//Check if any contact is unknown / non-existent
 		contacts = new HashSet<Contact>(contacts);
@@ -162,7 +290,7 @@ public class ContactManagerImpl implements ContactManager {
 	
 	/**
 	*This method can be used either to convert a futureMeeting that took place to a pastMeeting with notes,
-	*or to add notes to an existent pastMeeting
+	*or to add notes to an existant pastMeeting
 	*/
 	public void addMeetingNotes(int id, String text) {
 		//Check if the notes entered are null
@@ -184,29 +312,28 @@ public class ContactManagerImpl implements ContactManager {
 		}
 		//B) It is a futureMeeting that took place and I now want to recreate it as a pastMeeting and add some notes
 		
-				//This if checks that the meeting was once added as a futureMeeting
-				else if (futureMeetings.containsKey(id)) {
-				
-					//I check that the meeting has already taken place and therefore is now a PastMeeting
-					Calendar rightNow = Calendar.getInstance();
-					Calendar date = futureMeetings.get(id).getDate();
-				
-					if (date.compareTo(rightNow) > 0) {
-						throw new IllegalStateException("Date given is a future date");
-					}
-					
-					//Now i recreate the meeting as a PastMeeting
-					
-					PastMeeting meeting = (PastMeeting) futureMeetings.get(id); //Cast the meeting to make it a PastMeeting
-					meeting = new PastMeetingImpl(meeting.getId(), meeting.getContacts(), meeting.getDate(), text);
-					//Remove the meting from the futureMeetings map
-					futureMeetings.remove(id);
-					//Finally add the meeting to the pastMeetings map
-					pastMeetings.put(id, meeting);
-					}
-				
-				//Finally if the meeting with this id does not exist either as a past or a future meeting , throw exception
-				else throw new IllegalArgumentException("A meeting with this id does NOT exist");
+		//This if checks that the meeting was once added as a futureMeeting
+		else if (futureMeetings.containsKey(id)) {
+		
+			//I check that the meeting has already taken place and therefore is now a PastMeeting
+			Calendar rightNow = Calendar.getInstance();
+			Calendar date = futureMeetings.get(id).getDate();
+		
+			if (date.compareTo(rightNow) > 0) {
+				throw new IllegalStateException("Date given is a future date");
+			}
+			
+			//Now i recreate the meeting as a PastMeeting
+			PastMeeting meeting = (PastMeeting) futureMeetings.get(id); //Cast the meeting to make it a PastMeeting
+			meeting = new PastMeetingImpl(meeting.getId(), meeting.getContacts(), meeting.getDate(), text);
+			//Remove the meting from the futureMeetings map
+			futureMeetings.remove(id);
+			//Finally add the meeting to the pastMeetings map
+			pastMeetings.put(id, meeting);
+			}
+		
+		//Finally if the meeting with this id does not exist either as a past or a future meeting , throw exception
+		else throw new IllegalArgumentException("A meeting with this id does NOT exist");
 	}	
 		
 		
@@ -274,13 +401,14 @@ public class ContactManagerImpl implements ContactManager {
 	
 	public void flush() {
 		//Creating the file
-		File file = new File("file.csv");
+		File file = new File("contacts.txt");
 			PrintWriter out = null;
 		try {
 			out = new PrintWriter(file);
 			//First I write the Contacts
-			out.println("Contacts");
 			for (Contact contact : savedContacts.values()) {
+				out.print("Contact");
+				out.print(",");
 				out.print(contact.getId());
 				out.print(",");
 				out.print(contact.getName());
@@ -288,35 +416,29 @@ public class ContactManagerImpl implements ContactManager {
 				out.println(contact.getNotes());
 			}
 			//Then I write the pastMeetings
-			out.println("Past Meetings");
 			for (PastMeeting meeting : pastMeetings.values()) {
+				out.print("Past Meeting,");
 				out.print(meeting.getId());
 				out.print(",");
 				for (Contact contact : meeting.getContacts()) {
-					out.print(contact.getId());
-					out.print(",");
-					out.print(contact.getName());
-					out.print(",");
-					out.print(contact.getNotes());
-					out.print(",");
+					out.print("contact " + contact.getId());
+					out.print("/");
 				}
+				out.print(",");
 				out.print(DateConverter.date2String(meeting.getDate()));
 				out.print(",");
 				out.println(meeting.getNotes());
 			}
 			//Then I write the futureMeetings
-			out.println("Future Meetings");
 			for (Meeting meeting : futureMeetings.values()) {
+				out.print("Future Meeting,");
 				out.print(meeting.getId());
 				out.print(",");
 				for (Contact contact : meeting.getContacts()) {
-					out.print(contact.getId());
-					out.print(",");
-					out.print(contact.getName());
-					out.print(",");
-					out.print(contact.getNotes());
-					out.print(",");
+					out.print("contact " + contact.getId());
+					out.print("/");
 				}
+				out.print(",");
 				out.println(DateConverter.date2String(meeting.getDate()));
 			}	
 		} catch (FileNotFoundException ex) {
@@ -335,6 +457,18 @@ public class ContactManagerImpl implements ContactManager {
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

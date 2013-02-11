@@ -10,7 +10,7 @@ public class ContactImpl implements Contact {
 	public ContactImpl(int ID, String name) {
 		this.ID = ID;
 		this.name = name;
-		this.notes = "";
+		this.notes = null;
 	}
 
 	public int getId() {
@@ -26,58 +26,16 @@ public class ContactImpl implements Contact {
 	}
 	
 	public void addNotes(String note) {
-		notes = notes + "\n" + note;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ID;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((notes == null) ? 0 : notes.hashCode());
-		return result;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		ContactImpl other = (ContactImpl) obj;
-		if (ID != other.ID) {
-			return false;
-		}
-		if (name == null) {
-			if (other.name != null) {
-				return false;
-			}
-		} else if (!name.equals(other.name)) {
-			return false;
-		}
 		if (notes == null) {
-			if (other.notes != null) {
-				return false;
-			}
-		} else if (!notes.equals(other.notes)) {
-			return false;
+			notes = note;
 		}
-		return true;
+		else {
+		notes = notes + ". " + note;
+		}
 	}	
 	
-/**	@Override
+	
+	@Override
   public boolean equals(Object obj) {
      if (obj == null) {
       return false;
@@ -97,7 +55,17 @@ public class ContactImpl implements Contact {
 		}
 		return true;
 	}
-	*/
+	//Created hashCode method too
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ID;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((notes == null) ? 0 : notes.hashCode());
+		return result;
+	}
+	
 }	
 		
 	
