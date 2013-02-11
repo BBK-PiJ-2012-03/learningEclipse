@@ -445,7 +445,9 @@ public class ContactManagerImpl implements ContactManager {
 			System.out.println("Cannot write to file " + file + ".");
 		
 		} finally {
-			out.close();
+			if (out != null) {
+				out.close();
+			}
 		}
 	
 	
